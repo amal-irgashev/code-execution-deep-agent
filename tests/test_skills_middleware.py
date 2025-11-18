@@ -190,35 +190,36 @@ description: [unclosed bracket
         assert "read_file" in prompt
         assert "execute" in prompt
 
-    def test_before_agent_stores_skills_in_state(self, middleware, valid_skill):
-        """Test that before_agent discovers and stores skills in state."""
-        state = {}
-        runtime = Mock()
+    def test_skills_discovered_at_init(self, temp_skills_dir, valid_skill):
+        """Test that skills are discovered during middleware initialization."""
+        middleware = SkillsMiddleware(skills_dir=temp_skills_dir)
         
-        update = middleware.before_agent(state, runtime)
-        
-        assert update is not None
-        assert "skills_metadata" in update
-        assert len(update["skills_metadata"]) == 1
-        assert update["skills_metadata"][0]["name"] == "test-skill"
+        assert len(middleware.skills) == 1
+        assert middleware.skills[0]["name"] == "test-skill"
+        assert middleware.skills[0]["description"] == "A test skill for unit testing"
 
-    def test_before_agent_skips_if_already_loaded(self, middleware, valid_skill):
-        """Test that before_agent doesn't reload if skills already in state."""
-        state = {"skills_metadata": [{"name": "existing"}]}
-        runtime = Mock()
+    def test_pre_discovered_skills(self, temp_skills_dir):
+        """Test that middleware accepts pre-discovered skills."""
+        pre_discovered = [
+            {"name": "custom-skill", "description": "Custom", "skill_md_path": "/path/to/skill.md"}
+        ]
         
-        update = middleware.before_agent(state, runtime)
+        middleware = SkillsMiddleware(
+            skills_dir=temp_skills_dir,
+            discovered_skills=pre_discovered
+        )
         
-        assert update is None  # Should not update if already loaded
+        assert middleware.skills == pre_discovered
+        assert len(middleware.skills) == 1
+        assert middleware.skills[0]["name"] == "custom-skill"
 
-    def test_wrap_model_call_injects_prompt(self, middleware, valid_skill):
+    def test_wrap_model_call_injects_prompt(self, temp_skills_dir, valid_skill):
         """Test that wrap_model_call injects skills prompt into system prompt."""
-        # Discover skills first
-        skills = middleware._discover_skills()
+        # Create middleware (skills discovered at init)
+        middleware = SkillsMiddleware(skills_dir=temp_skills_dir)
         
-        # Mock request with skills in state
+        # Mock request
         request = Mock()
-        request.state = {"skills_metadata": skills}
         request.system_prompt = "Original system prompt"
         
         # Mock handler

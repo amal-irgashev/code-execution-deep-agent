@@ -3,84 +3,51 @@
 This module provides SkillsMiddleware which discovers skill definitions from
 the filesystem, parses their metadata, and injects a progressive-disclosure
 prompt into the system that instructs the agent to load skills on-demand.
+
+Skills are discovered at initialization time (typically at import/startup),
+not during agent execution, for better performance and simpler async handling.
 """
 
-import asyncio
 import re
 from collections.abc import Awaitable, Callable
 from pathlib import Path
-from typing import NotRequired
 
 import yaml
 from langchain.agents.middleware.types import (
     AgentMiddleware,
-    AgentState,
     ModelRequest,
     ModelResponse,
 )
 
 
-class SkillsState(AgentState):
-    """Extended agent state that includes discovered skill metadata."""
-
-    skills_metadata: NotRequired[list[dict]]
-    """List of skill metadata dicts with name, description, and paths."""
-
-
 class SkillsMiddleware(AgentMiddleware):
     """Middleware that implements progressive disclosure for agent skills.
 
-    This middleware scans a skills directory for SKILL.md files, extracts
-    their metadata (name, description) from YAML frontmatter, and injects
-    a system prompt that lists available skills without loading full content.
-
-    The agent is instructed to use read_file() to load specific SKILL.md
-    files only when relevant to the user's request.
+    This middleware injects a system prompt that lists available skills
+    (name and description only) without loading full SKILL.md content.
+    
+    Skills are discovered at initialization time for efficiency. The agent
+    is instructed to use read_file() to load specific SKILL.md files only
+    when relevant to the user's request.
     """
 
-    state_schema = SkillsState
-
-    def __init__(self, skills_dir: Path | str) -> None:
+    def __init__(self, skills_dir: Path | str, discovered_skills: list[dict] | None = None) -> None:
         """Initialize the SkillsMiddleware.
 
         Args:
             skills_dir: Path to directory containing skill subdirectories.
-                       Each subdirectory should have a SKILL.md file.
+                       Used for discovery if discovered_skills not provided.
+            discovered_skills: Pre-discovered skill metadata. If provided,
+                             skips filesystem scanning for efficiency.
         """
         self.skills_dir = Path(skills_dir)
-
-    def before_agent(self, state: SkillsState, runtime) -> dict | None:
-        """Discover skills before agent execution and store in state.
-
-        This runs once at the start of agent execution to scan the skills
-        directory and parse all SKILL.md frontmatter.
-
-        Args:
-            state: Current agent state.
-            runtime: Agent runtime context.
-
-        Returns:
-            State update dict with skills_metadata, or None if already loaded.
-        """
-        # Only load skills if not already in state
-        if "skills_metadata" in state and state.get("skills_metadata"):
-            return None
-
-        skills = self._discover_skills()
-        return {"skills_metadata": skills}
-
-    async def abefore_agent(self, state: SkillsState, runtime) -> dict | None:
-        """Async version of before_agent.
         
-        Runs skill discovery in a separate thread to avoid blocking the event loop.
-        """
-        # Only load skills if not already in state
-        if "skills_metadata" in state and state.get("skills_metadata"):
-            return None
+        # Use pre-discovered skills if provided, otherwise discover now
+        if discovered_skills is not None:
+            self.skills = discovered_skills
+        else:
+            self.skills = self._discover_skills()
 
-        # Run blocking filesystem operations in a separate thread
-        skills = await asyncio.to_thread(self._discover_skills)
-        return {"skills_metadata": skills}
 
     def wrap_model_call(
         self,
@@ -90,16 +57,14 @@ class SkillsMiddleware(AgentMiddleware):
         """Inject skills prompt into system prompt before model call.
 
         Args:
-            request: Model request with state containing skills_metadata.
+            request: Model request to modify.
             handler: Handler to call with modified request.
 
         Returns:
             Model response from handler.
         """
-        skills = request.state.get("skills_metadata", [])
-        
-        if skills:
-            skills_prompt = self._format_skills_prompt(skills)
+        if self.skills:
+            skills_prompt = self._format_skills_prompt(self.skills)
             
             # Append to existing system prompt
             if request.system_prompt:
@@ -117,10 +82,8 @@ class SkillsMiddleware(AgentMiddleware):
         handler: Callable[[ModelRequest], Awaitable[ModelResponse]],
     ) -> ModelResponse:
         """Async version of wrap_model_call."""
-        skills = request.state.get("skills_metadata", [])
-        
-        if skills:
-            skills_prompt = self._format_skills_prompt(skills)
+        if self.skills:
+            skills_prompt = self._format_skills_prompt(self.skills)
             
             if request.system_prompt:
                 request = request.override(

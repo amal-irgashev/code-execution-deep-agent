@@ -62,8 +62,16 @@ model = ChatAnthropic(
     max_tokens=MAX_TOKENS,
 )
 
-# Create middleware
-skills_middleware = SkillsMiddleware(skills_dir=SKILLS_DIR)
+# Discover skills at import time (eager loading for efficiency)
+# This runs synchronously during module import, before any async event loop exists
+_skills_discovery = SkillsMiddleware(skills_dir=SKILLS_DIR)
+DISCOVERED_SKILLS = _skills_discovery.skills
+
+# Create middleware with pre-discovered skills
+skills_middleware = SkillsMiddleware(
+    skills_dir=SKILLS_DIR,
+    discovered_skills=DISCOVERED_SKILLS,
+)
 
 # HITL configuration
 INTERRUPT_ON = {
