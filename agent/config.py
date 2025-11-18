@@ -12,10 +12,9 @@ from langchain_anthropic import ChatAnthropic
 
 from deepagents.backends import CompositeBackend, FilesystemBackend
 
-from agent.backend_local_exec import LocalExecutionBackend
+from agent.backend_docker import DockerExecutionBackend
 from agent.middleware_skills import SkillsMiddleware
 from agent.prompt import SYSTEM_PROMPT
-from agent.virtualfs import VirtualMount, VirtualPathResolver
 
 # Load environment variables
 load_dotenv()
@@ -37,28 +36,18 @@ for subdir in ("data", "scripts", "results"):
 # Execution settings
 DEFAULT_TIMEOUT = 120  # seconds
 MAX_OUTPUT_CHARS = 50_000  # characters
+CONTAINER_NAME = "code-execution-agent"  # Docker container name
 
 # Model settings
 MODEL_NAME = "claude-sonnet-4-5-20250929"
 MAX_TOKENS = 8000
 
-# Virtual filesystem configuration (used for both file ops and shell commands)
-virtual_mounts = [
-    VirtualMount(virtual="/", physical=WORKSPACE_DIR),
-    VirtualMount(virtual="/data", physical=WORKSPACE_DIR / "data"),
-    VirtualMount(virtual="/scripts", physical=WORKSPACE_DIR / "scripts"),
-    VirtualMount(virtual="/results", physical=WORKSPACE_DIR / "results"),
-    VirtualMount(virtual="/skills", physical=SKILLS_DIR),
-]
-VIRTUAL_PATH_RESOLVER = VirtualPathResolver(virtual_mounts)
-
 # Create backends
-workspace_backend = LocalExecutionBackend(
+workspace_backend = DockerExecutionBackend(
     root_dir=WORKSPACE_DIR,
+    container_name=CONTAINER_NAME,
     default_timeout=DEFAULT_TIMEOUT,
     max_output_chars=MAX_OUTPUT_CHARS,
-    virtual_mode=True,  # Treat paths as virtual (relative to root_dir)
-    virtual_resolver=VIRTUAL_PATH_RESOLVER,
 )
 
 skills_backend = FilesystemBackend(

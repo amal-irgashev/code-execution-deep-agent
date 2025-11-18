@@ -15,9 +15,10 @@ A local code-executing deep agent with **Progressive Disclosure Skills**. This a
 ## Architecture
 
 This project demonstrates:
-- Custom `LocalExecutionBackend` extending FilesystemBackend with SandboxBackendProtocol
+- Custom `DockerExecutionBackend` for isolated command execution with consistent filesystem paths
 - Custom `SkillsMiddleware` for progressive capability disclosure
 - Skills-based architecture where tools are files, not hardcoded Python functions
+- Docker-based execution environment where `/data`, `/scripts`, `/results` paths work consistently in both file operations and executed scripts
 
 ## Quick Start
 
@@ -25,6 +26,7 @@ This project demonstrates:
 
 - Python 3.11 or higher
 - [uv](https://docs.astral.sh/uv/) - Modern, fast Python package manager
+- Docker Desktop installed and running
 - Anthropic API key for Claude models
 
 ### Installation
@@ -56,7 +58,28 @@ Then edit `.env` and add your Anthropic API key:
 ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-4. **Generate sample data** (optional, for demos):
+4. **Build the Docker image**:
+
+```bash
+docker build -t code-execution-agent:latest .
+```
+
+This creates a container image with Python 3.11 and pre-installed data science packages (pandas, numpy, matplotlib, etc.).
+
+5. **Start the execution container**:
+
+```bash
+docker run -d --name code-execution-agent -v "$(pwd)/workspace:/workspace" code-execution-agent:latest
+```
+
+On Windows (PowerShell), use:
+```powershell
+docker run -d --name code-execution-agent -v "${PWD}/workspace:/workspace" code-execution-agent:latest
+```
+
+**Note**: The container must be running for the agent to execute commands. See `docs/docker-setup.md` for troubleshooting and management.
+
+6. **Generate sample data** (optional, for demos):
 
 ```bash
 uv run python workspace/data/generate_sample_data.py
@@ -66,7 +89,7 @@ This creates:
 - `workspace/data/orders.csv` - 10,000 sample order records
 - `workspace/data/sample_form.pdf` - PDF with fillable form fields
 
-5. **Run the agent**:
+7. **Run the agent**:
 
 ```bash
 uv run python -m agent.graph
