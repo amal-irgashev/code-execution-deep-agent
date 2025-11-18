@@ -5,6 +5,7 @@ the filesystem, parses their metadata, and injects a progressive-disclosure
 prompt into the system that instructs the agent to load skills on-demand.
 """
 
+import asyncio
 import re
 from collections.abc import Awaitable, Callable
 from pathlib import Path
@@ -69,8 +70,17 @@ class SkillsMiddleware(AgentMiddleware):
         return {"skills_metadata": skills}
 
     async def abefore_agent(self, state: SkillsState, runtime) -> dict | None:
-        """Async version of before_agent."""
-        return self.before_agent(state, runtime)
+        """Async version of before_agent.
+        
+        Runs skill discovery in a separate thread to avoid blocking the event loop.
+        """
+        # Only load skills if not already in state
+        if "skills_metadata" in state and state.get("skills_metadata"):
+            return None
+
+        # Run blocking filesystem operations in a separate thread
+        skills = await asyncio.to_thread(self._discover_skills)
+        return {"skills_metadata": skills}
 
     def wrap_model_call(
         self,
