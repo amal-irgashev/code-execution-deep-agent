@@ -69,7 +69,13 @@ This creates:
 5. **Run the agent**:
 
 ```bash
-uv run python agent/runner.py
+uv run python -m agent.graph
+```
+
+Or:
+
+```bash
+uv run python agent/graph.py
 ```
 
 ## Usage Examples
@@ -110,7 +116,9 @@ The agent can also handle general questions without using skills:
 agent/
 ├── backend_local_exec.py    # LocalExecutionBackend implementation
 ├── middleware_skills.py     # SkillsMiddleware implementation
-└── runner.py                # Main entry point
+├── config.py                # Configuration and setup
+├── prompt.py                # System prompt
+└── graph.py                 # Agent graph and main entry point
 
 skills/
 ├── csv-analytics/
