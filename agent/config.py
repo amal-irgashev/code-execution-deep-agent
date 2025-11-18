@@ -44,6 +44,7 @@ workspace_backend = LocalExecutionBackend(
     root_dir=WORKSPACE_DIR,
     default_timeout=DEFAULT_TIMEOUT,
     max_output_chars=MAX_OUTPUT_CHARS,
+    virtual_mode=True,  # Treat paths as virtual (relative to root_dir)
 )
 
 skills_backend = FilesystemBackend(

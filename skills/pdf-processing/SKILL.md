@@ -35,7 +35,7 @@ python3 /skills/pdf-processing/scripts/extract_forms.py <pdf_path>
 **Example:**
 ```bash
 # Extract all form fields from a PDF
-python3 /skills/pdf-processing/scripts/extract_forms.py /workspace/data/sample_form.pdf
+python3 /skills/pdf-processing/scripts/extract_forms.py /data/sample_form.pdf
 ```
 
 **Output format:**
@@ -69,8 +69,8 @@ For more details on PDF form structure and field types, see:
 
 User asks: "What information is in the sample form PDF?"
 
-1. You: Verify file exists with `ls /workspace/data/`
-2. You: Run `execute("python3 /skills/pdf-processing/scripts/extract_forms.py /workspace/data/sample_form.pdf")`
+1. You: Verify file exists with `ls /data/`
+2. You: Run `execute("python3 /skills/pdf-processing/scripts/extract_forms.py /data/sample_form.pdf")`
 3. You: Parse JSON output
 4. You: Present extracted fields to user in a readable format
 

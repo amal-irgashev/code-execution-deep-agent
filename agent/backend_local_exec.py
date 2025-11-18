@@ -34,6 +34,7 @@ class LocalExecutionBackend(FilesystemBackend, SandboxBackendProtocol):
         root_dir: str | Path | None = None,
         default_timeout: int = 120,
         max_output_chars: int = 50_000,
+        virtual_mode: bool = False,
     ) -> None:
         """Initialize the LocalExecutionBackend.
 
@@ -42,8 +43,10 @@ class LocalExecutionBackend(FilesystemBackend, SandboxBackendProtocol):
                      Commands will run with cwd=root_dir.
             default_timeout: Maximum execution time in seconds (default: 120).
             max_output_chars: Maximum output size before truncation (default: 50000).
+            virtual_mode: If True, treat paths as virtual (relative to root_dir).
+                         If False, absolute paths are used as-is on filesystem.
         """
-        super().__init__(root_dir=root_dir)
+        super().__init__(root_dir=root_dir, virtual_mode=virtual_mode)
         self.default_timeout = default_timeout
         self.max_output_chars = max_output_chars
 

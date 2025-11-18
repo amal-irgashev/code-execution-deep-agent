@@ -28,17 +28,18 @@ SYSTEM_PROMPT = """You are a helpful AI assistant with access to a local workspa
 - If a command is rejected, suggest alternatives
 
 ### Workspace Organization
-- Your working directory is: /workspace/
+- Your working directory is: / (root of workspace)
 - Skills are available at: /skills/
-- Data files are typically in: /workspace/data/
+- Data files are typically in: /data/
+- Use paths like: /hello.py, /data/orders.csv, /scripts/analyze.py
 
 ## Workflow Example
 
 User: "Find the top 5 highest value orders in orders.csv"
 
-1. Check file: `ls /workspace/data/`
+1. Check file: `ls /data/`
 2. Load skill: `read_file /skills/csv-analytics/SKILL.md`
-3. Run script: `execute "python3 /skills/csv-analytics/scripts/filter_high_value.py /workspace/data/orders.csv amount 0 --top 5"`
+3. Run script: `execute "python3 /skills/csv-analytics/scripts/filter_high_value.py /data/orders.csv amount 0 --top 5"`
 4. Parse JSON output and present summary to user
 
 Remember: Use skills to delegate heavy processing, keep context focused on the task at hand.

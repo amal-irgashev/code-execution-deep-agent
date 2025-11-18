@@ -38,7 +38,7 @@ python3 /skills/csv-analytics/scripts/filter_high_value.py <csv_path> <column_na
 **Example:**
 ```bash
 # Find top 5 orders with amount > 1000
-python3 /skills/csv-analytics/scripts/filter_high_value.py /workspace/data/orders.csv amount 1000 --top 5
+python3 /skills/csv-analytics/scripts/filter_high_value.py /data/orders.csv amount 1000 --top 5
 ```
 
 ## Supporting Documentation
@@ -57,9 +57,9 @@ For more advanced usage patterns, see:
 
 User asks: "What are the top 5 orders by amount in orders.csv?"
 
-1. You: Check if file exists with `ls /workspace/data/`
-2. You: Peek at first lines with `read_file(/workspace/data/orders.csv, limit=5)` to see columns
-3. You: Run `execute("python3 /skills/csv-analytics/scripts/filter_high_value.py /workspace/data/orders.csv amount 0 --top 5")`
+1. You: Check if file exists with `ls /data/`
+2. You: Peek at first lines with `read_file(/data/orders.csv, limit=5)` to see columns
+3. You: Run `execute("python3 /skills/csv-analytics/scripts/filter_high_value.py /data/orders.csv amount 0 --top 5")`
 4. You: Parse JSON output and present summary to user in natural language
 
 ## Notes
