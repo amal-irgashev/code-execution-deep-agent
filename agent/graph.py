@@ -14,18 +14,20 @@ from deepagents import create_deep_agent
 from agent.config import (
     ANTHROPIC_API_KEY,
     INTERRUPT_ON,
+    SUBAGENTS,
     SYSTEM_PROMPT,
     backend,
     model,
     skills_middleware,
 )
 
-# Create the agent graph directly
+# Create the agent graph with subagents for competitive intelligence
 agent = create_deep_agent(
     model=model,
     system_prompt=SYSTEM_PROMPT,
     backend=backend,
     middleware=[skills_middleware],
+    subagents=SUBAGENTS,
     #interrupt_on=INTERRUPT_ON,
 )
 
